@@ -1,4 +1,8 @@
 #include <Arduino.h>
+#include <WiFiS3.h>
+
+#include "WIFIPASS.h"
+
 
 const int trigPin = 9;
 const int echoPin = 10;
