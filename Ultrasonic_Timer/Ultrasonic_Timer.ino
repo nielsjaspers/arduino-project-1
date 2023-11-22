@@ -19,6 +19,9 @@ unsigned long triggertime = 0;
 
 float duration, distance;
 
+int status = WL_IDLE_STATUS;
+
+WiFiServer server(80);
 
 void setup() {
   pinMode(trigPin, OUTPUT);
@@ -28,10 +31,24 @@ void setup() {
   pinMode(relayPin, OUTPUT);
 
   Serial.begin(9600);
+
+  //while(status != WL_CONNECTED){
+    //Serial.print("Attempting to connect to SSID: ");
+    //Serial.println(ssid);
+
+    //status = WiFi.begin(ssid, pass);
+
+    //delay(10000);
+  //}
+  //server.begin();
+
+  PrintWifiStatus();
 }
 
 void loop() {
   
+  WiFiClient client = server.available();
+
   digitalWrite(trigPin, LOW);
   delayMicroseconds(2);
   digitalWrite(trigPin, HIGH);
@@ -52,7 +69,7 @@ void loop() {
     if (millis() - triggertime > 4000){
         digitalWrite(redLedPin, HIGH);
         digitalWrite(relayPin, HIGH);
-        // tone(buzzPin, 3500, 500);
+        //tone(buzzPin, 3500, 500);
     }
     else{
       digitalWrite(redLedPin, LOW);
@@ -65,4 +82,14 @@ void loop() {
     digitalWrite(redLedPin, LOW);
     digitalWrite(relayPin, LOW);
   }
+}
+
+
+void PrintWifiStatus(){
+  Serial.print("IP Adress: ");
+  Serial.println(WiFi.localIP());
+
+  Serial.print("Signal strength (RSSI): ");
+  Serial.print(WiFi.RSSI());
+  Serial.println(" dBm");
 }
