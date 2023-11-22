@@ -3,6 +3,7 @@
 const int trigPin = 9;
 const int echoPin = 10;
 const int buzzPin = 4;
+const int relayPin = 2;
 
 const int yellowLedPin = 12;
 const int redLedPin = 7;
@@ -20,7 +21,8 @@ void setup() {
   pinMode(echoPin, INPUT);
   pinMode(yellowLedPin, OUTPUT);
   pinMode(redLedPin, OUTPUT);
-  
+  pinMode(relayPin, OUTPUT);
+
   Serial.begin(9600);
 }
 
@@ -45,15 +47,18 @@ void loop() {
     }
     if (millis() - triggertime > 4000){
         digitalWrite(redLedPin, HIGH);
-        tone(buzzPin, 3500, 500);
+        digitalWrite(relayPin, HIGH);
+        // tone(buzzPin, 3500, 500);
     }
     else{
       digitalWrite(redLedPin, LOW);
+      digitalWrite(relayPin, LOW);
     }
   }
   else{
     triggertime = 0;
     digitalWrite(yellowLedPin, LOW);
     digitalWrite(redLedPin, LOW);
+    digitalWrite(relayPin, LOW);
   }
 }
