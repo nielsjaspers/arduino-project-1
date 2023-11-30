@@ -45,10 +45,37 @@ void setup() {
   //}
   //server.begin();
 
+  if (!BLE.begin()){
+    Serial.println("Starting BLE failed!");
+    while (1);
+  }
+
+  BLE.setLocalName(peripheralName);
+  BLE.setAdvertisedService(fileTransferService);
+
+  fileTransferService.addCharacteristic(dataCharacteristic);
+
+  BLE.advertise();
+
   PrintWifiStatus();
 }
 
 void loop() {
+  BLEDevice central = BLE.central();
+  if (central) {
+    Serial.print("Connected to central: ");
+    Serial.println(central.address());
+    char recievedData [200];
+
+    while (central.connect()) {
+      if (dataCharacteristic.written()) {
+        strcpy(recievedData, (const char*) dataCharacteristic.value());
+        // Processes the recieved data
+        Serial.print("Recieved data: ");
+        Serial.println(recievedData);
+      }
+    }
+  }
   
   WiFiClient client = server.available();
 
