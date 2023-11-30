@@ -1,8 +1,9 @@
 #include <Arduino.h>
 #include <WiFiS3.h>
+#include <ArduinoBLE.h>
 
 #include "WIFIPASS.h"
-
+#include "BLUETOOTH.h"
 
 const int trigPin = 9;
 const int echoPin = 10;
@@ -21,6 +22,8 @@ float duration, distance;
 
 int status = WL_IDLE_STATUS;
 
+BLEService fileTransferService(dataCharacteristicsUUID);
+BLECharacteristic dataCharacteristic(dataCharacteristicsUUID, BLEWrite | BLERead, "");
 WiFiServer server(80);
 
 void setup() {
