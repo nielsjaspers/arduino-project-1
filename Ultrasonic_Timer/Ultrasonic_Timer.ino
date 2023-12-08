@@ -31,7 +31,7 @@ void setup() {
   pinMode(echoPin, INPUT);
   pinMode(yellowLedPin, OUTPUT);
   pinMode(redLedPin, OUTPUT);
-  pinMode(relayPin, OUTPUT);
+  pinMode(relayPin, OUTPUT);  
 
   Serial.begin(9600);
 
@@ -76,7 +76,7 @@ void loop() {
       }
     }
   }
-  
+
   WiFiClient client = server.available();
 
   digitalWrite(trigPin, LOW);
