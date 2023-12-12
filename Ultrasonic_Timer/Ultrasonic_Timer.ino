@@ -7,7 +7,7 @@
 
 const int TRIG_PIN = 9;
 const int ECHO_PIN = 10;
-const int buzzPin = 4;
+const int BUZZ_PIN = 4;
 const int RELAY_PIN = 2;
 
 const int YELLOW_LED_PIN = 12;
@@ -101,7 +101,7 @@ void loop() {
     if (millis() - triggerTime > 4000){
         digitalWrite(RED_LED_PIN, HIGH);
         digitalWrite(RELAY_PIN, HIGH);
-        //tone(buzzPin, 3500, 500);
+        //tone(BUZZ_PIN, 3500, 500);
     }
     else{
       digitalWrite(RED_LED_PIN, LOW);
