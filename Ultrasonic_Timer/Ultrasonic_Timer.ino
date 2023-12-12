@@ -5,18 +5,18 @@
 #include "WIFIPASS.h"
 #include "BLUETOOTH.h"
 
-const int trigPin = 9;
-const int echoPin = 10;
+const int TRIG_PIN = 9;
+const int ECHO_PIN = 10;
 const int buzzPin = 4;
-const int relayPin = 2;
+const int RELAY_PIN = 2;
 
-const int yellowLedPin = 12;
-const int redLedPin = 7;
+const int YELLOW_LED_PIN = 12;
+const int RED_LED_PIN = 7;
 
 const float SPEED_OF_SOUND = 0.0343;
 
-unsigned long timepassed;
-unsigned long triggertime = 0;
+unsigned long timePassed;
+unsigned long triggerTime = 0;
 
 float duration, distance;
 
@@ -27,11 +27,11 @@ BLECharacteristic dataCharacteristic(dataCharacteristicsUUID, BLEWrite | BLERead
 WiFiServer server(80);
 
 void setup() {
-  pinMode(trigPin, OUTPUT);
-  pinMode(echoPin, INPUT);
-  pinMode(yellowLedPin, OUTPUT);
-  pinMode(redLedPin, OUTPUT);
-  pinMode(relayPin, OUTPUT);  
+  pinMode(TRIG_PIN, OUTPUT);
+  pinMode(ECHO_PIN, INPUT);
+  pinMode(YELLOW_LED_PIN, OUTPUT);
+  pinMode(RED_LED_PIN, OUTPUT);
+  pinMode(RELAY_PIN, OUTPUT);  
 
   Serial.begin(9600);
 
@@ -79,38 +79,38 @@ void loop() {
 
   WiFiClient client = server.available();
 
-  digitalWrite(trigPin, LOW);
+  digitalWrite(TRIG_PIN, LOW);
   delayMicroseconds(2);
-  digitalWrite(trigPin, HIGH);
+  digitalWrite(TRIG_PIN, HIGH);
   delayMicroseconds(10);
-  digitalWrite(trigPin, LOW);
+  digitalWrite(TRIG_PIN, LOW);
 
-  duration = pulseIn(echoPin, HIGH);
+  duration = pulseIn(ECHO_PIN, HIGH);
   distance = (duration*SPEED_OF_SOUND)/2;
 
   Serial.print("distance: ");
   Serial.println(distance);
 
   if (distance <= 50) {
-    digitalWrite(yellowLedPin, HIGH);
-    if (triggertime == 0){
-      triggertime = millis();
+    digitalWrite(YELLOW_LED_PIN, HIGH);
+    if (triggerTime == 0){
+      triggerTime = millis();
     }
-    if (millis() - triggertime > 4000){
-        digitalWrite(redLedPin, HIGH);
-        digitalWrite(relayPin, HIGH);
+    if (millis() - triggerTime > 4000){
+        digitalWrite(RED_LED_PIN, HIGH);
+        digitalWrite(RELAY_PIN, HIGH);
         //tone(buzzPin, 3500, 500);
     }
     else{
-      digitalWrite(redLedPin, LOW);
-      digitalWrite(relayPin, LOW);
+      digitalWrite(RED_LED_PIN, LOW);
+      digitalWrite(RELAY_PIN, LOW);
     }
   }
   else{
-    triggertime = 0;
-    digitalWrite(yellowLedPin, LOW);
-    digitalWrite(redLedPin, LOW);
-    digitalWrite(relayPin, LOW);
+    triggerTime = 0;
+    digitalWrite(YELLOW_LED_PIN, LOW);
+    digitalWrite(RED_LED_PIN, LOW);
+    digitalWrite(RELAY_PIN, LOW);
   }
 }
 
