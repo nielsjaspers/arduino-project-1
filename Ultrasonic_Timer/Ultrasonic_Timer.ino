@@ -26,6 +26,8 @@ BLEService fileTransferService(dataCharacteristicsUUID);
 BLECharacteristic dataCharacteristic(dataCharacteristicsUUID, BLEWrite | BLERead, "");
 WiFiServer server(80);
 
+void PrintWifiStatus();
+
 void setup() {
   pinMode(TRIG_PIN, OUTPUT);
   pinMode(ECHO_PIN, INPUT);
