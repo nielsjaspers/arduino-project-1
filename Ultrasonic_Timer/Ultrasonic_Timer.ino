@@ -1,14 +1,36 @@
 #include <Arduino.h>
 #include <WiFiS3.h>
 #include <ArduinoBLE.h>
+#include <DS18B20.h>
+#include <ArduinoMqttClient.h>
 
-#include "WIFIPASS.h"
 #include "BLUETOOTH.h"
+#include "secrets.h"
+
+void onMqttMessage(int messageSize);
+
+/* MQTT Setup */
+char ssid[] = SSID;
+char pass[] = PASS;
+
+WiFiClient wifiClient;
+MqttClient mqttClient(wifiClient);
+
+
+const char BROKER[] = "192.168.144.1";
+const int PORT = 1883;
+const char PUBLISH_TOPIC[] = "nielsjaspers/distance"; // To-Do
+const char SUBSCRIBE_TOPIC[] = "dionstroet/regen"; // To-Do
+long count = 0;
+const long INTERVAL = 2000; // analog read interval
+unsigned long previousMillis = 0;
+/* MQTT Setup End */
 
 const int TRIG_PIN = 9;
 const int ECHO_PIN = 10;
 const int BUZZ_PIN = 4;
 const int RELAY_PIN = 2;
+const int TEMP_PIN = 13;
 
 const int YELLOW_LED_PIN = 12;
 const int RED_LED_PIN = 7;
@@ -25,8 +47,7 @@ int status = WL_IDLE_STATUS;
 BLEService fileTransferService(dataCharacteristicsUUID);
 BLECharacteristic dataCharacteristic(dataCharacteristicsUUID, BLEWrite | BLERead, "");
 WiFiServer server(80);
-
-void PrintWifiStatus();
+DS18B20 ds(TEMP_PIN);
 
 void setup() {
   pinMode(TRIG_PIN, OUTPUT);
@@ -35,17 +56,26 @@ void setup() {
   pinMode(RED_LED_PIN, OUTPUT);
   pinMode(RELAY_PIN, OUTPUT);  
 
-  Serial.begin(9600);
+  Serial.begin(115200);
 
-  //while(status != WL_CONNECTED){
-    //Serial.print("Attempting to connect to SSID: ");
-    //Serial.println(ssid);
+  while (WiFi.begin(ssid, pass) != WL_CONNECTED){
+    delay(5000);
+  }
 
-    //status = WiFi.begin(ssid, pass);
+  bool mqttConnected = false;
+  while (!mqttConnected){
+    if (!mqttClient.connect(BROKER, PORT)){
+      Serial.print("NOT CONNECTED!\n");
+      delay(1000);
+    }
+    else{
+      mqttConnected = true;
+    }
+    mqttClient.onMessage(onMqttMessage);
+    mqttClient.subscribe(SUBSCRIBE_TOPIC);
+  }
 
-    //delay(10000);
-  //}
-  //server.begin();
+  Serial.print("CONNECTED!\n");
 
   if (!BLE.begin()){
     Serial.println("Starting BLE failed!");
@@ -59,10 +89,30 @@ void setup() {
 
   BLE.advertise();
 
-  PrintWifiStatus();
 }
 
 void loop() {
+  mqttClient.poll();
+
+  unsigned long currentMillis = millis();
+
+  if (currentMillis - previousMillis >= INTERVAL){
+    previousMillis = currentMillis;
+
+    int value = distance;
+
+    Serial.print("Sending message to topic: ");
+    Serial.println(PUBLISH_TOPIC);
+    Serial.println(value);
+
+    mqttClient.beginMessage(PUBLISH_TOPIC, true, 0);
+    mqttClient.print(value);
+    mqttClient.endMessage();
+  }
+  delay(1);
+
+  
+
   BLEDevice central = BLE.central();
   if (central) {
     Serial.print("Connected to central: ");
@@ -79,7 +129,10 @@ void loop() {
     }
   }
 
-  WiFiClient client = server.available();
+  /* Temperatuur meting moet on andere plek! */
+  // ds.selectNext();
+  // Serial.print("Temp: ");
+  // Serial.println(ds.getTempC());
 
   digitalWrite(TRIG_PIN, LOW);
   delayMicroseconds(2);
@@ -116,12 +169,22 @@ void loop() {
   }
 }
 
+void onMqttMessage(int messageSize){
+  Serial.print("Recieved a message with topic: ");
+  Serial.println(mqttClient.messageTopic());
 
-void PrintWifiStatus(){
-  Serial.print("IP Adress: ");
-  Serial.println(WiFi.localIP());
+  int num;
 
-  Serial.print("Signal strength (RSSI): ");
-  Serial.print(WiFi.RSSI());
-  Serial.println(" dBm");
+  String message = "";
+  while (mqttClient.available()){
+    message.concat((char)mqttClient.read());
+  }
+  Serial.println(message);
+  num = message.toInt();
+
+  if (num == 0){
+    Serial.println("REGEN");
+  }
+  else{
+  }
 }
