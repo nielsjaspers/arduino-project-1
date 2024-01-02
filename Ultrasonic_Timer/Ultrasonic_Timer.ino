@@ -7,7 +7,7 @@
 #include "BLUETOOTH.h"
 #include "secrets.h"
 
-void onMqttMessage(int messageSize);
+void OnMqttMessage(int messageSize);
 
 /* MQTT Setup */
 char ssid[] = SSID;
@@ -71,7 +71,7 @@ void setup() {
     else{
       mqttConnected = true;
     }
-    mqttClient.onMessage(onMqttMessage);
+    mqttClient.onMessage(OnMqttMessage);
     mqttClient.subscribe(SUBSCRIBE_TOPIC);
   }
 
@@ -154,6 +154,7 @@ void loop() {
     if (millis() - triggerTime > 4000){
         digitalWrite(RED_LED_PIN, HIGH);
         digitalWrite(RELAY_PIN, HIGH);
+        Serial.print("TEST!!!!");
         //tone(BUZZ_PIN, 3500, 500);
     }
     else{
@@ -169,7 +170,7 @@ void loop() {
   }
 }
 
-void onMqttMessage(int messageSize){
+void OnMqttMessage(int messageSize){
   Serial.print("Recieved a message with topic: ");
   Serial.println(mqttClient.messageTopic());
 
