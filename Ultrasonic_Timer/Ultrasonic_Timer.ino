@@ -19,10 +19,19 @@ MqttClient mqttClient(wifiClient);
 
 const char BROKER[] = "192.168.144.1";
 const int PORT = 1883;
-const char PUBLISH_TOPIC[] = "nielsjaspers/distance"; // To-Do
-const char SUBSCRIBE_TOPIC[] = "dionstroet/regen"; // To-Do
+
+  // Publish Topics
+const char PUBLISH_TOPIC_DISTANCE[] = "nielsjaspers/distance";
+const char PUBLISH_TOPIC_AWAKE[] = "nielsjaspers/awake";
+const char PUBLISH_TOPIC_TEMP[] = "nielsjaspers/temperature";
+
+  // Subscribe Topics
+const char SUBSCRIBE_TOPIC_REGEN[] = "dionstroet/regen";
+const char SUBSCRIBE_TOPIC_TEMPERATURE[] = "dionstroet/temperatuur";
+
 long count = 0;
 const long INTERVAL = 2000; // analog read interval
+unsigned long currentMillis;
 unsigned long previousMillis = 0;
 /* MQTT Setup End */
 
@@ -41,6 +50,10 @@ unsigned long timePassed;
 unsigned long triggerTime = 0;
 
 float duration, distance;
+
+bool awake;
+
+unsigned long timeDifference;
 
 int status = WL_IDLE_STATUS;
 
@@ -71,8 +84,9 @@ void setup() {
     else{
       mqttConnected = true;
     }
+    mqttClient.subscribe(SUBSCRIBE_TOPIC_REGEN);
+    mqttClient.subscribe(SUBSCRIBE_TOPIC_TEMPERATURE);
     mqttClient.onMessage(OnMqttMessage);
-    mqttClient.subscribe(SUBSCRIBE_TOPIC);
   }
 
   Serial.print("CONNECTED!\n");
@@ -94,18 +108,20 @@ void setup() {
 void loop() {
   mqttClient.poll();
 
-  unsigned long currentMillis = millis();
+  currentMillis = millis();
 
-  if (currentMillis - previousMillis >= INTERVAL){
+  timeDifference = currentMillis - previousMillis;
+
+  if (timeDifference >= INTERVAL){
     previousMillis = currentMillis;
 
     int value = distance;
 
     Serial.print("Sending message to topic: ");
-    Serial.println(PUBLISH_TOPIC);
+    Serial.println(PUBLISH_TOPIC_DISTANCE);
     Serial.println(value);
 
-    mqttClient.beginMessage(PUBLISH_TOPIC, true, 0);
+    mqttClient.beginMessage(PUBLISH_TOPIC_DISTANCE, true, 0);
     mqttClient.print(value);
     mqttClient.endMessage();
   }
@@ -152,14 +168,19 @@ void loop() {
       triggerTime = millis();
     }
     if (millis() - triggerTime > 4000){
-        digitalWrite(RED_LED_PIN, HIGH);
-        digitalWrite(RELAY_PIN, HIGH);
-        Serial.print("TEST!!!!");
-        //tone(BUZZ_PIN, 3500, 500);
+      awake = true;
+      mqttClient.beginMessage(PUBLISH_TOPIC_AWAKE, true, 0);
+      mqttClient.print(awake);
+      mqttClient.endMessage();
+      digitalWrite(RED_LED_PIN, HIGH);
+      digitalWrite(RELAY_PIN, HIGH);
+      Serial.print("KOFFIEZETAPPARAAT AAN!!!");
+      tone(BUZZ_PIN, 3500, 500);
     }
     else{
       digitalWrite(RED_LED_PIN, LOW);
       digitalWrite(RELAY_PIN, LOW);
+      awake = false;
     }
   }
   else{
@@ -167,6 +188,7 @@ void loop() {
     digitalWrite(YELLOW_LED_PIN, LOW);
     digitalWrite(RED_LED_PIN, LOW);
     digitalWrite(RELAY_PIN, LOW);
+    awake = false;
   }
 }
 
@@ -174,18 +196,24 @@ void OnMqttMessage(int messageSize){
   Serial.print("Recieved a message with topic: ");
   Serial.println(mqttClient.messageTopic());
 
-  int num;
+  if (mqttClient.messageTopic() == SUBSCRIBE_TOPIC_REGEN){
+    int num;
 
-  String message = "";
-  while (mqttClient.available()){
-    message.concat((char)mqttClient.read());
-  }
-  Serial.println(message);
-  num = message.toInt();
+    String message = "";
+    while (mqttClient.available()){
+      message.concat((char)mqttClient.read());
+    }
+    Serial.println(message);
+    num = message.toInt();
 
-  if (num == 0){
-    Serial.println("REGEN");
+    if (num == 0){
+      Serial.println("REGEN");
+    }
+    else{
+      Serial.println("DROOG");
+    }
   }
-  else{
-  }
+  else if (mqttClient.messageTopic() == SUBSCRIBE_TOPIC_TEMPERATURE);
+
+  
 }
