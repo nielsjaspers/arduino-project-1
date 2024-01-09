@@ -162,6 +162,8 @@ void loop() {
   Serial.print("distance: ");
   Serial.println(distance);
 
+  int buzzTimes = 0;
+
   if (distance <= 50) {
     digitalWrite(YELLOW_LED_PIN, HIGH);
     if (triggerTime == 0){
@@ -174,13 +176,17 @@ void loop() {
       mqttClient.endMessage();
       digitalWrite(RED_LED_PIN, HIGH);
       digitalWrite(RELAY_PIN, HIGH);
-      Serial.print("KOFFIEZETAPPARAAT AAN!!!");
-      tone(BUZZ_PIN, 3500, 500);
+      Serial.println("KOFFIEZETAPPARAAT AAN!!!");
+      if(buzzTimes == 0){
+        tone(BUZZ_PIN, 3500, 500);
+        buzzTimes = 1;
+      }
     }
     else{
       digitalWrite(RED_LED_PIN, LOW);
       digitalWrite(RELAY_PIN, LOW);
       awake = false;
+      buzzTimes = 0;
     }
   }
   else{
@@ -189,6 +195,9 @@ void loop() {
     digitalWrite(RED_LED_PIN, LOW);
     digitalWrite(RELAY_PIN, LOW);
     awake = false;
+    mqttClient.beginMessage(PUBLISH_TOPIC_AWAKE, true, 0);
+    mqttClient.print(awake);
+    mqttClient.endMessage();
   }
 }
 
@@ -196,10 +205,11 @@ void OnMqttMessage(int messageSize){
   Serial.print("Recieved a message with topic: ");
   Serial.println(mqttClient.messageTopic());
 
+  String message = "";
+
   if (mqttClient.messageTopic() == SUBSCRIBE_TOPIC_REGEN){
     int num;
 
-    String message = "";
     while (mqttClient.available()){
       message.concat((char)mqttClient.read());
     }
@@ -213,7 +223,35 @@ void OnMqttMessage(int messageSize){
       Serial.println("DROOG");
     }
   }
-  else if (mqttClient.messageTopic() == SUBSCRIBE_TOPIC_TEMPERATURE);
+  else if (mqttClient.messageTopic() == SUBSCRIBE_TOPIC_TEMPERATURE){
+    float incomingTemp;
+
+    while (mqttClient.available()){
+      message.concat((char)mqttClient.read());
+    }
+    Serial.println(message);
+    incomingTemp = message.toFloat();
+
+    if (incomingTemp <= 15){
+      Serial.println("Outside is Cold");
+      tone(BUZZ_PIN, 4000, 2000);
+    }
+    else if (incomingTemp > 15 && incomingTemp < 20){
+      Serial.println("Outside is Getting Warmer");
+      tone(BUZZ_PIN, 3000, 2000);
+    }
+    else if (incomingTemp >= 20 && incomingTemp < 30){
+      Serial.println("Outside is Warm");
+      tone(BUZZ_PIN, 2000, 2000);
+    }
+    else if (incomingTemp >= 30){
+      Serial.println("Outside is Hot");
+      tone(BUZZ_PIN, 1000, 2000);
+    }
+    else{
+      Serial.println("NaN, Try again later.");
+    }
+  }
 
   
 }
