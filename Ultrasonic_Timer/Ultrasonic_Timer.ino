@@ -161,7 +161,7 @@ void loop() {
 
   if (distance <= 50) {
 
-    digitalWrite(YELLOW_LED_PIN, HIGH);
+    // digitalWrite(YELLOW_LED_PIN, HIGH);
 
     if (triggerTime == 0){
       triggerTime = millis();
@@ -171,12 +171,15 @@ void loop() {
       awake = true;
       bool machineon = true;
 
+      digitalWrite(RED_LED_PIN, LOW);
+
       if(buzzTimes == 0){
         tone(BUZZ_PIN, 3500, 500);
         buzzTimes = 1;
       }
 
       while(machineon){
+        triggerTime = 0;
         digitalWrite(YELLOW_LED_PIN, HIGH);
         digitalWrite(RELAY_PIN, HIGH);
         Serial.println("KOFFIEZETAPPARAAT AAN!!!");
@@ -189,16 +192,15 @@ void loop() {
         mqttClient.print(ds.getTempC());
         mqttClient.endMessage();
 
-        if (ds.getTempC() >= 105){
+        if (ds.getTempC() >= 26){ // 26 = debug
           machineon = false;
           digitalWrite(RELAY_PIN, LOW);
-          while(millis() - triggerTime > 15000){
-            digitalWrite(RED_LED_PIN, HIGH);
-            tone(BUZZ_PIN, 1000, 50000);
-          }
+          digitalWrite(YELLOW_LED_PIN, LOW);
+          digitalWrite(RED_LED_PIN, HIGH);          
+          tone(BUZZ_PIN, 1000, 20000);
         }
       
-        if (millis() - triggerTime > 420000){
+        if (millis() - triggerTime > 420000){ // 10000 = debug, 420000 = normal
           digitalWrite(RELAY_PIN, LOW);
           machineon = false;
           tone(BUZZ_PIN, 3500, 500);
@@ -213,7 +215,7 @@ void loop() {
       
     }
     else{
-      digitalWrite(RED_LED_PIN, LOW);
+      digitalWrite(YELLOW_LED_PIN, LOW);
       digitalWrite(RELAY_PIN, LOW);
       awake = false;
       buzzTimes = 0;
@@ -222,7 +224,6 @@ void loop() {
   else{
     triggerTime = 0;
     digitalWrite(YELLOW_LED_PIN, LOW);
-    digitalWrite(RED_LED_PIN, LOW);
     digitalWrite(RELAY_PIN, LOW);
     awake = false;
     mqttClient.beginMessage(PUBLISH_TOPIC_AWAKE, true, 0);
