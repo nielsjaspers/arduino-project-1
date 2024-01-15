@@ -50,6 +50,7 @@ unsigned long timePassed;
 unsigned long triggerTime = 0;
 
 float duration, distance;
+int buzzTimes = 0;
 
 bool awake;
 
@@ -145,11 +146,6 @@ void loop() {
     }
   }
 
-  /* Temperatuur meting moet on andere plek! */
-  // ds.selectNext();
-  // Serial.print("Temp: ");
-  // Serial.println(ds.getTempC());
-
   digitalWrite(TRIG_PIN, LOW);
   delayMicroseconds(2);
   digitalWrite(TRIG_PIN, HIGH);
@@ -162,25 +158,59 @@ void loop() {
   Serial.print("distance: ");
   Serial.println(distance);
 
-  int buzzTimes = 0;
 
   if (distance <= 50) {
+
     digitalWrite(YELLOW_LED_PIN, HIGH);
+
     if (triggerTime == 0){
       triggerTime = millis();
     }
-    if (millis() - triggerTime > 4000){
+
+    if ((millis() - triggerTime > 4000) && buzzTimes < 1){
       awake = true;
-      mqttClient.beginMessage(PUBLISH_TOPIC_AWAKE, true, 0);
-      mqttClient.print(awake);
-      mqttClient.endMessage();
-      digitalWrite(RED_LED_PIN, HIGH);
-      digitalWrite(RELAY_PIN, HIGH);
-      Serial.println("KOFFIEZETAPPARAAT AAN!!!");
+      bool machineon = true;
+
       if(buzzTimes == 0){
         tone(BUZZ_PIN, 3500, 500);
         buzzTimes = 1;
       }
+
+      while(machineon){
+        digitalWrite(YELLOW_LED_PIN, HIGH);
+        digitalWrite(RELAY_PIN, HIGH);
+        Serial.println("KOFFIEZETAPPARAAT AAN!!!");
+
+        ds.selectNext();
+        Serial.print("Temp: ");
+        Serial.println(ds.getTempC());
+
+        mqttClient.beginMessage(PUBLISH_TOPIC_TEMP, true, 0);
+        mqttClient.print(ds.getTempC());
+        mqttClient.endMessage();
+
+        if (ds.getTempC() >= 105){
+          machineon = false;
+          digitalWrite(RELAY_PIN, LOW);
+          while(millis() - triggerTime > 15000){
+            digitalWrite(RED_LED_PIN, HIGH);
+            tone(BUZZ_PIN, 1000, 50000);
+          }
+        }
+      
+        if (millis() - triggerTime > 420000){
+          digitalWrite(RELAY_PIN, LOW);
+          machineon = false;
+          tone(BUZZ_PIN, 3500, 500);
+          buzzTimes = 0;
+        }
+      }
+
+      mqttClient.beginMessage(PUBLISH_TOPIC_AWAKE, true, 0);
+      mqttClient.print(awake);
+      mqttClient.endMessage();
+
+      
     }
     else{
       digitalWrite(RED_LED_PIN, LOW);
@@ -252,6 +282,4 @@ void OnMqttMessage(int messageSize){
       Serial.println("NaN, Try again later.");
     }
   }
-
-  
 }
