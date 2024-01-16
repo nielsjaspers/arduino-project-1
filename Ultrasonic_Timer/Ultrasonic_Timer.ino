@@ -192,7 +192,7 @@ void loop() {
         mqttClient.print(ds.getTempC());
         mqttClient.endMessage();
 
-        if (ds.getTempC() >= 26){ // 26 = debug
+        if (ds.getTempC() >= 26 || ds.getTempC() <= 0){ // 26 is for demonstrating purposes/ debug.
           machineon = false;
           digitalWrite(RELAY_PIN, LOW);
           digitalWrite(YELLOW_LED_PIN, LOW);
@@ -200,7 +200,7 @@ void loop() {
           tone(BUZZ_PIN, 1000, 20000);
         }
       
-        if (millis() - triggerTime > 420000){ // 10000 = debug, 420000 = normal
+        if (millis() - triggerTime > 240000){ // 10000 = debug, 240000 = normal (240000 = 4 minutes)
           digitalWrite(RELAY_PIN, LOW);
           machineon = false;
           tone(BUZZ_PIN, 3500, 500);
